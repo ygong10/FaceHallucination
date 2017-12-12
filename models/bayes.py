@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.misc import imread
+from skimage.transform import pyramid_gaussian, pyramid_laplacian
 
 # Sobel filters
 first_sobel_horiz = np.array([
@@ -44,6 +45,20 @@ def map_formulation(G_0, G_k, height, width, k=2, covariance=1.0):
             for n in range(width))
         for m in range(height))
 
-def gradient_prior(H_0, V_0, height, width, k=2, covariance=1.0):
+def gradient_prior(H0_G0, V0_G0, predicted_H0_I, predicted_V0_I, height, width, k=2, covariance=1.0):
     # calculates -ln Pr[G_0]
-    pass
+    return 1 / (2*covariance) * sum(
+        sum(
+            sum((H0_G0[m, n] - predicted_H0_I[m, n]) ** 2
+            for n in range(width))
+            for m in range(height))) + 1 / (2*covariance) * sum(
+        sum(
+            sum((V0_G0[m, n] - predicted_V0_I[m, n]) ** 2
+            for n in range(width))
+            for m in range(height)))
+
+im = imread('../data/CAFE-FACS-Orig/004_d2.pgm')
+g_pyramid = pyramid_gaussian(im, max_layer=2)
+g_pyramid = list(g_pyramid)
+l_pyramid = pyramid_laplacian(im, max_layer=2)
+l_pyramid = list(l_pyramid)
