@@ -18,7 +18,7 @@ def align_faces(shape, path_to_images, image_name, path_to_aligned_images, rows,
 	# the facial landmark predictor and the face aligner
 	detector = dlib.get_frontal_face_detector()
 	predictor = dlib.shape_predictor(shape)
-	fa = FaceAligner(predictor, desiredFaceWidth=cols, desiredFaceHeight=rows)
+	fa = FaceAligner(predictor, desiredLeftEye=(0.27, 0.27), desiredFaceWidth=cols, desiredFaceHeight=rows)
 
 	# load the input image, resize it, and convert it to grayscale
 	image = cv2.imread(os.path.join(path_to_images, image_name))
@@ -34,7 +34,17 @@ def align_faces(shape, path_to_images, image_name, path_to_aligned_images, rows,
 
 		if path_to_aligned_images[-1] != '/':
 			path_to_aligned_images += '/'
-		cv2.imwrite(path_to_aligned_images + image_name + "_aligned.png", faceAligned)
+		img_split = image_name.split(".")
+		path_adjust = path_to_images.replace('/', '_')
+		image_name = path_adjust + img_split[0] + "_aligned.png"
+		cv2.imwrite(path_to_aligned_images + image_name, faceAligned)
+
+def align_faces_helper(path_to_images, path_to_shape, path_to_aligned_images, rows, cols):
+	for root, subdirs, files in os.walk(path_to_images):
+		for filename in files:
+			align_faces(path_to_shape, root, filename, path_to_aligned_images, rows, cols)
+		for subdir in subdirs:
+			align_faces_helper(root + subdir, path_to_shape, path_to_aligned_images, rows, cols)
 
 if __name__=="__main__":
 	rows = 128
@@ -46,5 +56,6 @@ if __name__=="__main__":
 	path_to_images = args["faces"]
 	path_to_aligned_images = args["aligned_faces"]
 	path_to_shape = 'shape_predictor_68_face_landmarks.dat'
-	for filename in os.listdir(path_to_images):
-		align_faces(path_to_shape, path_to_images, filename, path_to_aligned_images, rows, cols)
+	align_faces_helper(path_to_images, path_to_shape, path_to_aligned_images, rows, cols)
+	# for filename in os.listdir(path_to_images):
+	# 	align_faces(path_to_shape, path_to_images, filename, path_to_aligned_images, rows, cols)

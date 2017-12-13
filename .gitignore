@@ -108,11 +108,14 @@ pip-selfcheck.json
 # mypy
 .mypy_cache/
 
-# big images
-training/
+
+# picture files
+data/
 aligned_data/
+results/
+training/
+testing/
+*.h5
 
 .vscode
 
-*.h5
-testing/
