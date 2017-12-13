@@ -108,5 +108,9 @@ pip-selfcheck.json
 # mypy
 .mypy_cache/
 
-# training
+# big images
 training/
+aligned_data/
+
+.vscode
+
