@@ -114,3 +114,5 @@ aligned_data/
 
 .vscode
 
+*.h5
+testing/
