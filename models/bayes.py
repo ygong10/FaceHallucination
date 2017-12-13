@@ -108,7 +108,9 @@ def predict_high_res(training_ims, low_res_im, k=2, N=4):
     pbar = tqdm(total=low_res_im.size * 4**k)
     for m in range(low_res_im.shape[0] * 2**k):
         for n in range(low_res_im.shape[1] * 2**k):
-            fv_errors = [PS_error(fvs, m // 2**k, n // 2**k) for fvs in training_im_fvs]
+            lr_m = min(round(m / 2**k), low_res_im.shape[0]-1)
+            lr_n = min(round(n / 2**k), low_res_im.shape[1]-1)
+            fv_errors = [PS_error(fvs, lr_m, lr_n) for fvs in training_im_fvs]
             j = np.argmin(fv_errors)
             high_res[m, n] = training_ims[j][m, n]
             pbar.update(1)
@@ -117,7 +119,7 @@ def predict_high_res(training_ims, low_res_im, k=2, N=4):
 
 training_ims = glob.glob('../ucsd_aligned_images/*.png')
 training_ims = [imread(fn, mode='L') for fn in training_ims]
-target_im = imread('../yang_aligned.png', mode='L')
+target_im = imread('../013_h1_aligned.png', mode='L')
 target_im = list(pyramid_gaussian(target_im, max_layer=2))[-1]
 predicted_im = predict_high_res(training_ims, target_im)
 
