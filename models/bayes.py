@@ -1,7 +1,10 @@
+import glob
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import imread
 from scipy.ndimage.filters import convolve
 from skimage.transform import pyramid_gaussian, pyramid_laplacian
+from tqdm import tqdm
 
 # Sobel filters
 first_sobel_horiz = np.array([
@@ -72,31 +75,60 @@ def F(g_layer, l_layer):
         convolve(g_layer, second_sobel_horiz), convolve(g_layer, second_sobel_vert)
     )
 
+def F_idx(fv, m, n):
+    return tuple(layer[m, n] for layer in fv)
+
 def PS(im, depth):
     g_pyramid = pyramid_gaussian(im, max_layer=depth)
     l_pyramid = pyramid_gaussian(im, max_layer=depth)
     return [F(g_layer, l_layer) for g_layer, l_layer in zip(g_pyramid, l_pyramid)]
 
+def PS_idx(ps, m, n):
+    ret = []
+    for fv in ps:
+        ret.append(F_idx(fv, m, n))
+        m //= 2
+        n //= 2
+    return ret
+
 def predict_high_res(training_ims, low_res_im, k=2, N=4):
     low_res_fvs = PS(low_res_im, N-k)
-    def PS_error(im):
-        fvs = PS(im, N)[k:]
+    training_im_fvs = [PS(im, N)[:k] for im in training_ims]
+    def PS_error(fvs, m, n):
         weights = np.array([1, 0.5, 0.5, 0.5, 0.5])
         error = 0
+        low_res_pixels = PS_idx(low_res_fvs, m, n)
+        fv_pixels = PS_idx(fvs, m, n)
         for i in range(N-k):
-            error += sum(weights * [np.linalg.norm(lr_fv-fv, ord=2) for lr_fv, fv in zip(low_res_fvs[i], fvs[i])])
+            error += np.linalg.norm(np.multiply(weights, np.subtract(low_res_pixels[i], fv_pixels[i])), ord=2)
             weights /= 2
         return error
 
     high_res = np.zeros((low_res_im.shape[0] * 2**k, low_res_im.shape[1] * 2**k))
+    pbar = tqdm(total=low_res_im.size * 4**k)
     for m in range(low_res_im.shape[0] * 2**k):
         for n in range(low_res_im.shape[1] * 2**k):
-            fv_errors = [PS_error(im) for im in training_ims]
+            lr_m = min(round(m / 2**k), low_res_im.shape[0]-1)
+            lr_n = min(round(n / 2**k), low_res_im.shape[1]-1)
+            fv_errors = [PS_error(fvs, lr_m, lr_n) for fvs in training_im_fvs]
             j = np.argmin(fv_errors)
             high_res[m, n] = training_ims[j][m, n]
+            pbar.update(1)
+    pbar.close()
     return high_res
 
-im = imread('../data/CAFE-FACS-Orig/004_d2.pgm')
+training_ims = glob.glob('../ucsd_aligned_images/*.png')
+training_ims = [imread(fn, mode='L') for fn in training_ims]
+target_im = imread('../013_h1_aligned.png', mode='L')
+target_im = list(pyramid_gaussian(target_im, max_layer=2))[-1]
+predicted_im = predict_high_res(training_ims, target_im)
+
+plt.figure()
+plt.imshow(target_im, cmap='gray')
+plt.figure()
+plt.imshow(predicted_im, cmap='gray')
+plt.show()
+#im = imread('../data/CAFE-FACS-Orig/004_d2.pgm')
 #g_pyramid = pyramid_gaussian(im, max_layer=2)
 #g_pyramid = list(g_pyramid)
 #l_pyramid = pyramid_laplacian(im, max_layer=2)

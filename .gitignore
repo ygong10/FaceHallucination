@@ -108,7 +108,16 @@ pip-selfcheck.json
 # mypy
 .mypy_cache/
 
+<<<<<<< HEAD
 # picture files
 data/
 aligned_data/
 results/
+=======
+# big images
+training/
+aligned_data/
+
+.vscode
+
+>>>>>>> 10cc7889b5ca95dfb8028e3770b3de960b43e126
