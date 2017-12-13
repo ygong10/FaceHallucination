@@ -107,3 +107,8 @@ pip-selfcheck.json
 
 # mypy
 .mypy_cache/
+
+# picture files
+data/
+aligned_data/
+results/
