@@ -2,6 +2,8 @@ import glob
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.misc import imread
+from scipy.misc import imresize
+from scipy.misc import imsave
 from scipy.ndimage.filters import convolve
 from skimage.transform import pyramid_gaussian, pyramid_laplacian
 from tqdm import tqdm
@@ -119,17 +121,12 @@ def predict_high_res(training_ims, low_res_im, k=2, N=4):
 
 training_ims = glob.glob('../ucsd_aligned_images/*.png')
 training_ims = [imread(fn, mode='L') for fn in training_ims]
-target_im = imread('../013_h1_aligned.png', mode='L')
-target_im = list(pyramid_gaussian(target_im, max_layer=2))[-1]
-predicted_im = predict_high_res(training_ims, target_im)
+target_files = glob.glob('../profile_pictures_aligned/*.png')
+target_ims = [imresize(imread(fn, mode='L'), (32, 24)) for fn in target_files]
 
-plt.figure()
-plt.imshow(target_im, cmap='gray')
-plt.figure()
-plt.imshow(predicted_im, cmap='gray')
-plt.show()
-#im = imread('../data/CAFE-FACS-Orig/004_d2.pgm')
-#g_pyramid = pyramid_gaussian(im, max_layer=2)
-#g_pyramid = list(g_pyramid)
-#l_pyramid = pyramid_laplacian(im, max_layer=2)
-#l_pyramid = list(l_pyramid)
+for i, target_im in enumerate(target_ims):
+    predicted_im = predict_high_res(training_ims, target_im)
+    imsave('../bayes_results/{0}.png'.format(target_files[i]), predicted_im)
+    #plt.figure()
+    #plt.imshow(predicted_im, cmap='gray')
+#plt.show()
