@@ -4,6 +4,8 @@ from copy import deepcopy
 import scipy.linalg
 import scipy.misc
 import matplotlib.pyplot as plt
+import os, os.path
+from sklearn.preprocessing import normalize
 
 """
   Face Hallucination using Eigentransformation
@@ -18,24 +20,26 @@ def load_data(low_res_file_path, high_res_file_path):
 
   return low_res_images, high_res_images
 
-def get_eigenfaces_and_eigenvalues(images, mean_face):
+def get_eigenfaces_and_eigenvalues(images, mean_face, k):
   L = images - np.vstack(mean_face)
   R = np.matmul(L.T, L)
-  eig_vals, eig_vecs = scipy.linalg.eig(R, left=True, right=False)
+  eig_vals, eig_vecs = scipy.linalg.eig(R, left=False, right=True)
   # Converting the array of eigenvalues into a matrix of eigenvalues
-  eig_vals_matrix = np.eye(eig_vals.shape[0]) * eig_vals
   # Get rid of complex values, I don't know why there's sometimes complex values.
-  eigenfaces = np.real(np.matmul(np.matmul(L, eig_vecs), (np.linalg.inv(eig_vals_matrix)**(1/2))))
+  eigenfaces = normalize(np.real(np.matmul(L, eig_vecs)), axis=0)
+  sort_indices = np.argsort(eig_vals)[:k]
+  eigenfaces = eigenfaces.T[sort_indices].T
+  eig_vals = eig_vals[sort_indices]
   return eigenfaces, eig_vals
 
-def get_low_res_weights(images, input_image):
+def get_low_res_weights(images, input_image, k):
   m_l = np.mean(images, axis=1)
-  E_l, eig_val_l = get_eigenfaces_and_eigenvalues(images, m_l)
+  E_l, eig_val_l = get_eigenfaces_and_eigenvalues(images, m_l, k)
   return get_weights(E_l, input_image, m_l)
 
-def get_hallucinated_results(images, width, height, low_res_weights, alpha):
+def get_hallucinated_results(images, width, height, low_res_weights, alpha, k):
   m_h = np.mean(images, axis=1)
-  E_h, eig_val_h = get_eigenfaces_and_eigenvalues(images, m_h)
+  E_h, eig_val_h = get_eigenfaces_and_eigenvalues(images, m_h, k)
 
   x_h = np.zeros((width * height,))
   for i in range(len(low_res_weights)):
@@ -56,27 +60,19 @@ def get_hallucinated_results(images, width, height, low_res_weights, alpha):
 def get_weights(eigenfaces, input_image, mean_face):
   return np.matmul(eigenfaces.T, input_image - mean_face)
 
-def main():
-  LOW_RES_DATA_TRAINING_PATH = 'training/training_low_res.npy'
-  HIGH_RES_DATA_TRAINING_PATH = 'training/training_high_res.npy'
-  LOW_RES_DATA_TESTING_PATH = 'testing/testing_low_res.npy'
-  HIGH_RES_DATA_TESTING_PATH = 'testing/testing_high_res.npy'
-
-  ALPHA = .1 # Requires tuning
-
-  low_res_images, high_res_images = load_data(LOW_RES_DATA_TRAINING_PATH, HIGH_RES_DATA_TRAINING_PATH)
-  high_res_sample = scipy.misc.imread("../aligned_data/umass_aligned_images/_._data_umass_originalPics_2002_07_19_bigimg_18_aligned.png", mode='L')
-  high_res_width, high_res_height = high_res_sample.shape
-
-  # Change the input image, make sure it's a 1 x num_pixels image
-  input_image = scipy.misc.imread("result/arvind_low_res.png", mode='L')
-  input_image = input_image.reshape(32*24)
-  plt.imshow(input_image.reshape(32, 24), cmap='gray')
-  plt.show()
+def eigentransform(
+  input_image,
+  low_res_images,
+  high_res_images,
+  high_res_width,
+  high_res_height,
+  alpha,
+  k):
 
   low_res_weights = get_low_res_weights(
     images=low_res_images,
-    input_image=input_image
+    input_image=input_image,
+    k=k
   )
 
   hallucinated_result = get_hallucinated_results(
@@ -84,11 +80,44 @@ def main():
     width=high_res_width,
     height=high_res_height,
     low_res_weights=low_res_weights,
-    alpha=ALPHA
+    alpha=alpha,
+    k=k
   )
 
-  plt.imshow(hallucinated_result, cmap="gray")
-  plt.show()
+  return hallucinated_result
+
+def main():
+  LOW_RES_DATA_TRAINING_PATH = 'training/training_low_res.npy'
+  HIGH_RES_DATA_TRAINING_PATH = 'training/training_high_res.npy'
+  LOW_RES_DATA_TESTING_PATH = 'testing/testing_low_res.npy'
+  HIGH_RES_DATA_TESTING_PATH = 'testing/testing_high_res.npy'
+
+  ALPHA = 0.01 # Requires tuning
+  K = 200
+
+  low_res_images, high_res_images = load_data(LOW_RES_DATA_TRAINING_PATH, HIGH_RES_DATA_TRAINING_PATH)
+  high_res_sample = scipy.misc.imread("../aligned_data/umass_aligned_images/_._data_umass_originalPics_2002_07_19_bigimg_18_aligned.png", mode='L')
+  high_res_width, high_res_height = high_res_sample.shape
+
+  # Change the input image, make sure it's a 1 x num_pixels image
+  for path in os.listdir('result/low_res'):
+    print(path)
+    input_image = scipy.misc.imread(os.path.join('result/low_res', path), mode='L')
+
+    input_image = input_image.reshape(32*24)
+
+    # Start eigentransformation
+    hallucinated_result = eigentransform(
+      input_image=input_image,
+      low_res_images=low_res_images,
+      high_res_images=high_res_images,
+      high_res_width=high_res_width,
+      high_res_height=high_res_height,
+      alpha=ALPHA,
+      k=K
+    )
+
+    scipy.misc.imsave(os.path.join('result/hallucinated_eigentransformation/', path), hallucinated_result)
 
 if __name__ == "__main__":
   main()

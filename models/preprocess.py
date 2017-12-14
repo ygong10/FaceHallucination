@@ -129,9 +129,9 @@ PYRAMID_LEVELS = 3
 # )
 
 # Testing individual image.
-im = scipy.misc.imread("result/yang.png", mode='L')
+im = scipy.misc.imread("result/original/arvind4.png", mode='L')
 pyramid = generate_gaussian_pyramid(im, 2, 2, 3)
-scipy.misc.imsave('yang_high_res.png', pyramid[0])
-scipy.misc.imsave('yang_low_res.png', pyramid[-1])
-# plt.imshow(pyramid[-1], cmap="gray")
-# plt.show()
+scipy.misc.imsave('result/high_res/arvind_high_res4.png', pyramid[0])
+scipy.misc.imsave('result/low_res/arvind_low_res4.png', pyramid[-1])
+plt.imshow(pyramid[-1], cmap="gray")
+plt.show()

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from scipy import ndimage, misc
 from copy import deepcopy
 from keras import backend as K
+import os, os.path
 
 def get_training_data():
   xdata = np.load('training/training_low_res.npy')
@@ -91,9 +92,16 @@ history = model.fit(xtrain, ytrain, batch_size=CONST_BATCH_SIZE, epochs=CONST_EP
 # xtest = xtest.T.reshape(NUM_TESTING_SAMPLES, 32, 24, CHANNEL)
 # ytest = ytest.T.reshape(NUM_TESTING_SAMPLES, 128, 96, CHANNEL)
 
-#model.save('fsrcnn.h5')
+model.save('fsrcnn.h5')
 
 # Uncomment this to test on images
+for path in os.listdir('result/low_res'):
+  input_image = misc.imread(os.path.join('result/low_res', path), mode='L')
+  input_image = input_image.reshape(1, 32, 24, 1)
+  prediction = model.predict(input_image, batch_size=CONST_BATCH_SIZE)
+  im = prediction[0, :, :, 0].reshape(128, 96)
+  misc.imsave(os.path.join('result/hallucinated_cnn_100/', path), im)
+
 # input_image = misc.imread('result/yang_low_res.png', mode='L')
 # input_image = input_image.reshape(1, 32, 24, 1)
 # prediction = model.predict(input_image, batch_size=CONST_BATCH_SIZE)
@@ -101,6 +109,5 @@ history = model.fit(xtrain, ytrain, batch_size=CONST_BATCH_SIZE, epochs=CONST_EP
 # plt.imshow(im, cmap='gray')
 # plt.show()
 # misc.imsave('result/yang_hallucinated.png', im)
-# np.save('output', predictions)
-# print('saved output file')
+
 
