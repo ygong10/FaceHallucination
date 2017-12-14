@@ -104,29 +104,29 @@ def generate_gaussian_pyramid(im, downsample_factor, sigma, levels):
 
   return gaussian_pyramid
 
-IMAGE_PATH = '../aligned_data/umass_aligned_images/'
+IMAGE_PATH = '../aligned_data/profile_pictures_aligned/'
 TRAINING_HIGH_RES_PATH = 'training/training_high_res'
 TRAINING_LOW_RES_PATH = 'training/training_low_res'
 TESTING_HIGH_RES_PATH = 'testing/testing_high_res.npy'
 TESTING_LOW_RES_PATH = 'testing/testing_low_res.npy'
-LOW_RES_IMAGE_PATH = '../aligned_data/umass_aligned_low_res_images/'
+LOW_RES_IMAGE_PATH = '../aligned_data/profile_pictures_aligned_low_res/'
 SIGMA = 2 # Sigma for gaussian filter.
 DOWNSAMPLE_FACTOR = 2 # Downsample factor for gaussian pyramid
 PYRAMID_LEVELS = 3
 
 # Run this to generate the training low resolution and high resolution images
-# create_data_from_images(
-#   data_path=IMAGE_PATH,
-#   low_res_image_path=LOW_RES_IMAGE_PATH,
-#   low_res_training_path=TRAINING_LOW_RES_PATH,
-#   high_res_training_path=TRAINING_HIGH_RES_PATH,
-#   low_res_testing_path=TESTING_LOW_RES_PATH,
-#   high_res_testing_path=TESTING_HIGH_RES_PATH,
-#   split_factor=0.1,
-#   sigma=SIGMA,
-#   downsample_factor=DOWNSAMPLE_FACTOR,
-#   levels=PYRAMID_LEVELS
-# )
+create_data_from_images(
+  data_path=IMAGE_PATH,
+  low_res_image_path=LOW_RES_IMAGE_PATH,
+  low_res_training_path=TRAINING_LOW_RES_PATH,
+  high_res_training_path=TRAINING_HIGH_RES_PATH,
+  low_res_testing_path=TESTING_LOW_RES_PATH,
+  high_res_testing_path=TESTING_HIGH_RES_PATH,
+  split_factor=0.1,
+  sigma=SIGMA,
+  downsample_factor=DOWNSAMPLE_FACTOR,
+  levels=PYRAMID_LEVELS
+)
 
 # Testing individual image.
 im = scipy.misc.imread("result/original/arvind4.png", mode='L')
