@@ -16,35 +16,41 @@ import os
 def align_faces(shape, path_to_images, image_name, path_to_aligned_images, rows, cols):
 	# initialize dlib's face detector (HOG-based) and then create
 	# the facial landmark predictor and the face aligner
-	detector = dlib.get_frontal_face_detector()
-	predictor = dlib.shape_predictor(shape)
-	fa = FaceAligner(predictor, desiredLeftEye=(0.27, 0.27), desiredFaceWidth=cols, desiredFaceHeight=rows)
+	try:
+		print('ALIGNING AN IMAGE INSIDE ' + path_to_images)
+		detector = dlib.get_frontal_face_detector()
+		predictor = dlib.shape_predictor(shape)
+		fa = FaceAligner(predictor, desiredLeftEye=(0.27, 0.27), desiredFaceWidth=cols, desiredFaceHeight=rows)
 
-	# load the input image, resize it, and convert it to grayscale
-	image = cv2.imread(os.path.join(path_to_images, image_name))
-	image = imutils.resize(image, width=800)
-	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+		# load the input image, resize it, and convert it to grayscale
+		image = cv2.imread(os.path.join(path_to_images, image_name))
+		image = imutils.resize(image, width=800)
+		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-	rects = detector(gray, 2)
-	if(len(rects) > 0):
-		rect = rects[0]
-		(x, y, w, h) = rect_to_bb(rect)
-		faceOrig = imutils.resize(image[y:y + h, x:x + w], width=cols, height=rows)
-		faceAligned = fa.align(image, gray, rect)
+		rects = detector(gray, 2)
+		if(len(rects) > 0):
+			rect = rects[0]
+			(x, y, w, h) = rect_to_bb(rect)
+			faceOrig = imutils.resize(image[y:y + h, x:x + w], width=cols, height=rows)
+			faceAligned = fa.align(image, gray, rect)
 
-		if path_to_aligned_images[-1] != '/':
-			path_to_aligned_images += '/'
-		img_split = image_name.split(".")
-		path_adjust = path_to_images.replace('/', '_')
-		image_name = path_adjust + img_split[0] + "_aligned.png"
-		cv2.imwrite(path_to_aligned_images + image_name, faceAligned)
+			if path_to_aligned_images[-1] != '/':
+				path_to_aligned_images += '/'
+			img_split = image_name.split(".")
+			path_adjust = path_to_images.replace('/', '_')
+			image_name = path_adjust + img_split[0] + "_aligned.png"
+			cv2.imwrite(path_to_aligned_images + image_name, faceAligned)
+	except BaseException as e:
+		print(e)
 
 def align_faces_helper(path_to_images, path_to_shape, path_to_aligned_images, rows, cols):
+	print('inside ' + path_to_images)
 	for root, subdirs, files in os.walk(path_to_images):
 		for filename in files:
-			align_faces(path_to_shape, root, filename, path_to_aligned_images, rows, cols)
+			if filename[0] != '\\':
+				align_faces(path_to_shape, root, filename, path_to_aligned_images, rows, cols)
 		for subdir in subdirs:
-			align_faces_helper(root + subdir, path_to_shape, path_to_aligned_images, rows, cols)
+			align_faces_helper(root + '/' + subdir, path_to_shape, path_to_aligned_images, rows, cols)
 
 if __name__=="__main__":
 	rows = 128
