@@ -12,6 +12,7 @@ def sharpen_image(path_to_aligned_images, image_name, path_to_results):
     # print(sharp_filter)
 
     image = cv2.imread(os.path.join(path_to_aligned_images, image_name))
+    image = cv2.resize(image, (96, 128))
     sharp_result = cv2.filter2D(image, -1, sharp_filter)
     box_result = cv2.filter2D(image, -1, box_filter)
     result = sharp_result - box_result
@@ -19,7 +20,7 @@ def sharpen_image(path_to_aligned_images, image_name, path_to_results):
         path_to_results += '/'
     img_split = image_name.split(".")
     image_name = img_split[0] + "_sharpening_filter.png"
-    result = cv2.resize(result, (96, 128))
+    # result = cv2.resize(result, (96, 128))
     cv2.imwrite(path_to_results + image_name, result)
 
 
