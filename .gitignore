@@ -116,6 +116,6 @@ results/
 training/
 testing/
 *.h5
-
+result/
 .vscode
 
